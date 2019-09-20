@@ -126,32 +126,46 @@ int main(void)
 			if (send(new_fd, "Hello, world!", 13, 0) == -1)
 				perror("send failed");
 			
-			numbytes = recv(new_fd, wget_buf, MAXDATASIZE-1, 0);
-			// numspace = 0;
-			// c = strtok(wget_buf, " ");
-			// while (c != NULL) {
-			// 	wget_p = realloc(wget_p, ++numspace*sizeof(char*));
-			// 	if (wget_p == NULL) 
-			// 		printf("\nWget parse failed!\n");
-			// 	wget_p[numspace-1] = c;
-			// 	c = strtok(NULL, " ");
-			// }
-
-			// fd = fopen(wget_p[1], "r"); 
-			// printf("\nFile Name Received: %s\n", wget_p[1]); 
-			fd = fopen(wget_buf, "r"); 
-			printf("\nFile Name Received: %s\n", wget_buf); 			
-			if (fd == NULL) 
-				printf("\nFile open failed!\n"); 
-			else
-				printf("\nFile Successfully opened!\n");
-
-			do {
-				numfread = fread(file_buf, sizeof(file_buf), MAXDATASIZE, fd);
-				if (send(new_fd, file_buf, MAXDATASIZE, 0) == -1)
+			if (recv(new_fd, wget_buf, MAXDATASIZE-1, 0) == -1){ // if recv error
+				if (send(new_fd, "HTTP/1.1 400 Bad Request", 24, 0) == -1)
 					perror("send failed");
+			}
+			else{
+				////// parse get structure
+				// numspace = 0;
+				// c = strtok(wget_buf, " ");
+				// while (c != NULL) {
+				// 	wget_p = realloc(wget_p, ++numspace*sizeof(char*));
+				// 	if (wget_p == NULL) 
+				// 		printf("\nWget parse failed!\n");
+				// 	wget_p[numspace-1] = c;
+				// 	c = strtok(NULL, " ");
+				// }
+				// fd = fopen(wget_p[1], "r"); 
+				// printf("\nFile Name Received: %s\n", wget_p[1]); 
 
-			} while (numfread == MAXDATASIZE);
+				fd = fopen(wget_buf, "r"); 
+				printf("\nFile Name Received: %s\n", wget_buf); 			
+				if (fd == NULL) {
+					printf("\nFile open failed!\n"); 
+					if (send(new_fd, "HTTP/1.1 404 Not Found", 22, 0) == -1)
+						perror("send failed");
+				}
+				else{
+					printf("\nFile Successfully opened!\n");
+					if (send(new_fd, "HTTP/1.1 200 OK", 15, 0) == -1)
+						perror("send failed");
+
+					do {
+						numfread = fread(file_buf, sizeof(file_buf), MAXDATASIZE-1, fd);
+						file_buf[numfread+1] = '\0';
+						if (send(new_fd, file_buf, MAXDATASIZE, 0) == -1)
+							perror("send failed");
+
+					} while (numfread == MAXDATASIZE-1);
+
+				}
+			}
 
 			close(new_fd);
 			exit(0);
