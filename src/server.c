@@ -17,7 +17,7 @@
 
 #define PORT "3490"  // the port users will be connecting to
 //#define PORT "80"  // the http port users will be connecting to
-#define MAXDATASIZE 100
+#define MAXDATASIZE 100 
 #define BACKLOG 10	 // how many pending connections queue will hold
 
 void sigchld_handler(int s)
@@ -45,12 +45,12 @@ int main(void)
 	int yes=1;
 	char s[INET6_ADDRSTRLEN];
 	int rv;
-
+	
 	char wget_buf[MAXDATASIZE];
 	char file_buf[MAXDATASIZE];
 	char *c;
 	char **wget_p  = NULL;
-	int numbytes, numspace, numfread;
+	int numbytes, numspace, numfread; 
 	FILE *fd;
 
 	memset(&hints, 0, sizeof hints);
@@ -125,33 +125,48 @@ int main(void)
 			close(sockfd); // child doesn't need the listener
 			if (send(new_fd, "Hello, world!", 13, 0) == -1)
 				perror("send failed");
-
-			numbytes = recv(new_fd, wget_buf, MAXDATASIZE-1, 0);
-			// numspace = 0;
-			// c = strtok(wget_buf, " ");
-			// while (c != NULL) {
-			// 	wget_p = realloc(wget_p, ++numspace*sizeof(char*));
-			// 	if (wget_p == NULL)
-			// 		printf("\nWget parse failed!\n");
-			// 	wget_p[numspace-1] = c;
-			// 	c = strtok(NULL, " ");
-			// }
-
-			// fd = fopen(wget_p[1], "r");
-			// printf("\nFile Name Received: %s\n", wget_p[1]);
-			fd = fopen(wget_buf, "r");
-			printf("\nFile Name Received: %s\n", wget_buf);
-			if (fd == NULL)
-				printf("\nFile open failed!\n");
-			else
-				printf("\nFile Successfully opened!\n");
-
-			do {
-				numfread = fread(file_buf, sizeof(file_buf), MAXDATASIZE, fd);
-				if (send(new_fd, file_buf, MAXDATASIZE, 0) == -1)
+			
+			if (recv(new_fd, wget_buf, MAXDATASIZE-1, 0) == -1){ // if recv error
+				if (send(new_fd, "HTTP/1.1 400 Bad Request", MAXDATASIZE, 0) == -1)
 					perror("send failed");
+			}
+			else{
+				////// parse get structure
+				// numspace = 0;
+				// c = strtok(wget_buf, " ");
+				// while (c != NULL) {
+				// 	wget_p = realloc(wget_p, ++numspace*sizeof(char*));
+				// 	if (wget_p == NULL) 
+				// 		printf("\nWget parse failed!\n");
+				// 	wget_p[numspace-1] = c;
+				// 	c = strtok(NULL, " ");
+				// }
+				// fd = fopen(wget_p[1], "r"); 
+				// printf("\nFile Name Received: %s\n", wget_p[1]); 
 
-			} while (numfread == MAXDATASIZE);
+				fd = fopen(wget_buf, "r"); 
+				printf("\nFile Name Received: %s\n", wget_buf); 			
+				if (fd == NULL) {
+					printf("\nFile open failed!\n"); 
+					if (send(new_fd, "HTTP/1.1 404 Not Found", MAXDATASIZE, 0) == -1)
+						perror("send failed");
+				}
+				else{
+					printf("\nFile Successfully opened!\n");
+					if (send(new_fd, "HTTP/1.1 200 OK", MAXDATASIZE, 0) == -1)
+						perror("send failed");
+
+					do {
+						memset(file_buf,0,sizeof(file_buf));
+						numfread = fread(file_buf, sizeof(file_buf), MAXDATASIZE-1, fd);
+						file_buf[numfread+1] = '\0';
+						if (send(new_fd, file_buf, MAXDATASIZE, 0) == -1)
+							perror("send failed");
+
+					} while (numfread == MAXDATASIZE-1);
+
+				}
+			}
 
 			close(new_fd);
 			exit(0);
@@ -161,3 +176,4 @@ int main(void)
 
 	return 0;
 }
+
