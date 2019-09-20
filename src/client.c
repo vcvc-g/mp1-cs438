@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 	freeaddrinfo(servinfo); // all done with this structure
   //**************************************************************************send file path*******************************************************************************
 
-	if ((numbytes = send(sockfd, filePath, MAXDATASIZE-1, 0)) == -1){
+	if ((numbytes = send(sockfd, filePath, MAXDATASIZE-1, 0)) == -1){   // why minus -1 ?
 		printf("Send Failed");
 	}
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
@@ -115,6 +115,38 @@ int main(int argc, char *argv[])
 
 	printf("client: received '%s'\n",buf);
 
+	//*********************************************************************create output file*********************************************************************************
+
+	FILE * fPtr = NULL;
+	numbytes = 0;
+	int rc;
+	char fileBuf[MAXDATASIZE];
+	int counter = 0;
+
+	*fPtr = fopen("output", "wb");
+	if (!fPtr )
+		printf("create file failed");
+
+	while(1){
+			memset(buf, 0, sizeof(buf));
+
+			if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+					printf("receive failed\n");
+					break;
+			}
+			while(*(buf + counter) != '\0'){
+					append(fileBuf, *(buf + counter);
+					counter++;
+		  }
+			if ((rc = fputs(fileBuf, fPtr)) == -1) {
+					printf("writing to file failed\n");
+					break;
+			}
+			if(counter != (MAXDATASIZE-1))
+				break;
+	}
+
+	fclose(fPtr);
 	close(sockfd);
 
 	return 0;
