@@ -16,7 +16,7 @@
 #include <signal.h>
 
 #define PORT "3490"  // the port users will be connecting to
-//#define PORT "80"  // the http port users will be connecting to
+// #define PORT "80"  // the http port users will be connecting to
 #define MAXDATASIZE 100 
 #define BACKLOG 10	 // how many pending connections queue will hold
 
@@ -153,8 +153,12 @@ int main(void)
 				}
 				else{
 					printf("\nFile Successfully opened!\n");
-					if (send(new_fd, "HTTP/1.1 200 OK", MAXDATASIZE, 0) == -1)
-						perror("send failed");
+					// memset(file_buf,0,sizeof(file_buf));
+					// sprintf(file_buf,"HTTP/1.1 200 OK");
+					// file_buf[MAXDATASIZE] = '\0';
+					//end(new_fd, file_buf, MAXDATASIZE, 0);
+					// memset(file_buf,0,sizeof(file_buf));
+					// send(new_fd, file_buf, MAXDATASIZE, 0);
 
 					do {
 						memset(file_buf,0,sizeof(file_buf));
