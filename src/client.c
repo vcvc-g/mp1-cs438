@@ -66,8 +66,8 @@ int main(int argc, char *argv[])
 		firstAddress++;
 	}
 
-	printf("hostname: %s\n", hostName);
-	printf("filePath: %s\n", filePath);
+	//printf("hostname: %s\n", hostName);
+	//printf("filePath: %s\n", filePath);
 
 	if ((rv = getaddrinfo(hostName, PORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -101,8 +101,12 @@ int main(int argc, char *argv[])
 	printf("client: connecting to %s\n", s);
 
 	freeaddrinfo(servinfo); // all done with this structure
+  //**************************************************************************send file path*******************************************************************************
 
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+	if ((numbytes = send(sockfd, filePath, MAXDATASIZE-1, 0)) == -1){
+		printf("Send Failed");
+	}
+	if ((numbytes = recv(sockfd, hostName, MAXDATASIZE-1, 0)) == -1) {
 	    perror("recv");
 	    exit(1);
 	}
