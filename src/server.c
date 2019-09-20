@@ -127,7 +127,7 @@ int main(void)
 				perror("send failed");
 			
 			if (recv(new_fd, wget_buf, MAXDATASIZE-1, 0) == -1){ // if recv error
-				if (send(new_fd, "HTTP/1.1 400 Bad Request", 24, 0) == -1)
+				if (send(new_fd, "HTTP/1.1 400 Bad Request", MAXDATASIZE, 0) == -1)
 					perror("send failed");
 			}
 			else{
@@ -148,12 +148,12 @@ int main(void)
 				printf("\nFile Name Received: %s\n", wget_buf); 			
 				if (fd == NULL) {
 					printf("\nFile open failed!\n"); 
-					if (send(new_fd, "HTTP/1.1 404 Not Found", 22, 0) == -1)
+					if (send(new_fd, "HTTP/1.1 404 Not Found", MAXDATASIZE, 0) == -1)
 						perror("send failed");
 				}
 				else{
 					printf("\nFile Successfully opened!\n");
-					if (send(new_fd, "HTTP/1.1 200 OK", 15, 0) == -1)
+					if (send(new_fd, "HTTP/1.1 200 OK", MAXDATASIZE, 0) == -1)
 						perror("send failed");
 
 					do {
