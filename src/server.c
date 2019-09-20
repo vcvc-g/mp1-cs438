@@ -157,6 +157,7 @@ int main(void)
 						perror("send failed");
 
 					do {
+						memset(file_buf,0,sizeof(file_buf));
 						numfread = fread(file_buf, sizeof(file_buf), MAXDATASIZE-1, fd);
 						file_buf[numfread+1] = '\0';
 						if (send(new_fd, file_buf, MAXDATASIZE, 0) == -1)
