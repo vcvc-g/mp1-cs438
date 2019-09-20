@@ -162,8 +162,8 @@ int main(void)
 
 					do {
 						memset(file_buf,0,sizeof(file_buf));
-						numfread = fread(file_buf, sizeof(file_buf), MAXDATASIZE-1, fd);
-						file_buf[numfread+1] = '\0';
+						numfread = fread(file_buf, sizeof(char), MAXDATASIZE-1, fd);
+						file_buf[numfread] = '\0';
 						if (send(new_fd, file_buf, MAXDATASIZE, 0) == -1)
 							perror("send failed");
 
