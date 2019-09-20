@@ -124,21 +124,23 @@ int main(void)
 		if (!fork()) { // this is the child process
 			close(sockfd); // child doesn't need the listener
 			if (send(new_fd, "Hello, world!", 13, 0) == -1)
-				perror("send");
+				perror("send failed");
 			
 			numbytes = recv(new_fd, wget_buf, MAXDATASIZE-1, 0);
-			numspace = 0;
-			c = strtok(wget_buf, " ");
-			while (c != NULL) {
-				wget_p = realloc(c, ++numspace*sizeof(char*));
-				if (wget_p == NULL) 
-					printf("\nWget parse failed!\n");
-				wget_p[numspace-1] = c;
-				c = strtok(NULL, " ");
-			}
+			// numspace = 0;
+			// c = strtok(wget_buf, " ");
+			// while (c != NULL) {
+			// 	wget_p = realloc(wget_p, ++numspace*sizeof(char*));
+			// 	if (wget_p == NULL) 
+			// 		printf("\nWget parse failed!\n");
+			// 	wget_p[numspace-1] = c;
+			// 	c = strtok(NULL, " ");
+			// }
 
-			fd = fopen(wget_p[1], "r"); 
-			printf("\nFile Name Received: %s\n", wget_p[1]); 
+			// fd = fopen(wget_p[1], "r"); 
+			// printf("\nFile Name Received: %s\n", wget_p[1]); 
+			fd = fopen(wget_buf, "r"); 
+			printf("\nFile Name Received: %s\n", wget_buf); 			
 			if (fd == NULL) 
 				printf("\nFile open failed!\n"); 
 			else
@@ -147,7 +149,7 @@ int main(void)
 			do {
 				numfread = fread(file_buf, sizeof(file_buf), MAXDATASIZE, fd);
 				if (send(new_fd, file_buf, MAXDATASIZE, 0) == -1)
-					perror("send error");
+					perror("send failed");
 
 			} while (numfread == MAXDATASIZE);
 
