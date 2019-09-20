@@ -153,12 +153,14 @@ int main(void)
 				}
 				else{
 					printf("\nFile Successfully opened!\n");
-					memset(file_buf,0,sizeof(file_buf));
-					sprintf(file_buf,"HTTP/1.1 200 OK");
-					file_buf[MAXDATASIZE] = '\0';
-					send(new_fd, file_buf, MAXDATASIZE, 0);
+					// memset(file_buf,0,MAXDATASIZE);
+					// strcpy(file_buf,"HTTP/1.1 200 OK");
+					// file_buf[MAXDATASIZE-1] = '\0';
+					// send(new_fd, file_buf, MAXDATASIZE, 0);
 					// memset(file_buf,0,sizeof(file_buf));
 					// send(new_fd, file_buf, MAXDATASIZE, 0);
+					if (send(new_fd, "HTTP/1.1 200 OK", 15, 0) == -1)
+						perror("send failed");
 
 					do {
 						memset(file_buf,0,sizeof(file_buf));
