@@ -123,20 +123,26 @@ int main(int argc, char *argv[])
 	char fileBuf[MAXDATASIZE];
 	int counter = 0;
 
-	*fPtr = fopen("output", "wb");
+	fPtr = fopen("output", "wb");
 	if (!fPtr )
 		printf("create file failed");
 
 	while(1){
+			//printf("???");
 			memset(buf, 0, sizeof(buf));
+			counter = 0;
 
-			if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+			if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
 					printf("receive failed\n");
 					break;
 			}
+			printf("number of bytes = %d\n", numbytes);
 			while(*(buf + counter) != '\0'){
-					append(fileBuf, *(buf + counter);
+					append(fileBuf, *(buf + counter));
 					counter++;
+					if(*(buf + counter) == '\n'){
+						printf("1\n");
+					}
 		  }
 			if ((rc = fputs(fileBuf, fPtr)) == -1) {
 					printf("writing to file failed\n");
