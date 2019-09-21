@@ -14,10 +14,12 @@
 
 #include <arpa/inet.h>
 
-// #define PORT "3490" // the port client will be connecting to 
-#define PORT "80" // the http port client will be connecting to 
+#define PORT "3490" // the port client will be connecting to
+//#define PORT "80" // the http port client will be connecting to
 
-#define MAXDATASIZE 100 // max number of bytes we can get at once 
+#define MAXDATASIZE 100 // max number of bytes we can get at once
+
+void append(char *str, char ch);
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -31,7 +33,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(int argc, char *argv[])
 {
-	int sockfd, numbytes;  
+	int sockfd, numbytes;
 	char buf[MAXDATASIZE];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
@@ -46,7 +48,28 @@ int main(int argc, char *argv[])
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rv = getaddrinfo(argv[1], PORT, &hints, &servinfo)) != 0) {
+
+	//***************************************************parse cliend string**************************************************************************************//
+	char *firstAddress = argv[1] + 7;
+	char hostName[256] = "";
+	char filePath[256] = ".";
+	int slashCount = 0;
+	while(*(firstAddress) != '\0'){
+			if(*firstAddress == '/' )
+					slashCount++;
+			if(slashCount != 1){
+					append(hostName, *firstAddress);
+			}
+			else if(slashCount == 1){
+					append(filePath, *firstAddress);
+			}
+		firstAddress++;
+	}
+
+	//printf("hostname: %s\n", hostName);
+	//printf("filePath: %s\n", filePath);
+
+	if ((rv = getaddrinfo(hostName, PORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
@@ -78,7 +101,11 @@ int main(int argc, char *argv[])
 	printf("client: connecting to %s\n", s);
 
 	freeaddrinfo(servinfo); // all done with this structure
+  //**************************************************************************send file path*******************************************************************************
 
+	if ((numbytes = send(sockfd, filePath, MAXDATASIZE-1, 0)) == -1){   // why minus -1 ?
+		printf("Send Failed");
+	}
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 	    perror("recv");
 	    exit(1);
@@ -88,8 +115,53 @@ int main(int argc, char *argv[])
 
 	printf("client: received '%s'\n",buf);
 
+	//*********************************************************************create output file*********************************************************************************
+
+	FILE * fPtr = NULL;
+	numbytes = 0;
+	int rc;
+	char fileBuf[MAXDATASIZE];
+	int counter = 0;
+
+	fPtr = fopen("output", "wb");
+	if (!fPtr )
+		printf("create file failed");
+
+	while(1){
+			//printf("???");
+			memset(buf, 0, sizeof(buf));
+			counter = 0;
+
+			if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
+					printf("receive failed\n");
+					break;
+			}
+			printf("number of bytes = %d\n", numbytes);
+			while(*(buf + counter) != '\0'){
+					append(fileBuf, *(buf + counter));
+					counter++;
+					if(*(buf + counter) == '\n'){
+						printf("1\n");
+					}
+		  }
+			if ((rc = fputs(fileBuf, fPtr)) == -1) {
+					printf("writing to file failed\n");
+					break;
+			}
+			if(counter != (MAXDATASIZE-1))
+				break;
+	}
+
+	fclose(fPtr);
 	close(sockfd);
 
 	return 0;
 }
 
+
+
+void append(char *str, char ch){
+    int len = strlen(str);
+    str[len] = ch;
+    str[len + 1] = '\0';
+}
