@@ -169,8 +169,8 @@ int main(int argc, char *argv[])
 				}
 				else{
 					printf("\nFile Successfully opened!\n");
-					strncpy(file_buf,HTTP200,(sizeof file_buf)-1);
-					send(new_fd, file_buf, strlen(file_buf), 0);
+					strcpy(file_buf,HTTP200);
+					send(new_fd, file_buf, MAXDATASIZE-1, 0);
 					do {
 						memset(file_buf,0,sizeof(file_buf));
 						numfread = fread(file_buf, sizeof(char), MAXDATASIZE, fd);
@@ -182,6 +182,7 @@ int main(int argc, char *argv[])
 							
 					} while (numfread == MAXDATASIZE-1);
 					fclose(fd);
+					printf("File closed");
 				}
 			}
 
