@@ -127,6 +127,14 @@ int main(int argc, char *argv[])
 	if (!fPtr )
 		printf("create file failed");
 
+	if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
+			printf("receive failed\n");
+	}
+	printf("%s",buf);
+	// if ((rc = fputs(buf, fPtr)) == -1) {
+	// 		printf("writing to file failed\n");
+	// }
+
 	while(1){
 			//printf("???");
 			memset(buf, 0, sizeof(buf));

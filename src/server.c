@@ -48,9 +48,10 @@ int main(void)
 	
 	char wget_buf[MAXDATASIZE];
 	char file_buf[MAXDATASIZE];
-	char *c;
-	char **wget_p  = NULL;
-	int numbytes, numspace, numfread; 
+	// char *c;
+	// char **wget_p  = NULL;
+	// int numbytes, numspace, numfread; 
+	int numfread;
 	FILE *fd;
 
 	memset(&hints, 0, sizeof hints);
@@ -127,7 +128,7 @@ int main(void)
 				perror("send failed");
 			
 			if (recv(new_fd, wget_buf, MAXDATASIZE-1, 0) == -1){ // if recv error
-				if (send(new_fd, "HTTP/1.1 400 Bad Request", MAXDATASIZE, 0) == -1)
+				if (send(new_fd, "HTTP/1.1 400 Bad Request\r\n\r\n", MAXDATASIZE, 0) == -1)
 					perror("send failed");
 			}
 			else{
@@ -148,19 +149,19 @@ int main(void)
 				printf("\nFile Name Received: %s\n", wget_buf); 			
 				if (fd == NULL) {
 					printf("\nFile open failed!\n"); 
-					if (send(new_fd, "HTTP/1.1 404 Not Found", MAXDATASIZE, 0) == -1)
+					if (send(new_fd, "HTTP/1.1 404 Not Found\r\n\r\n", MAXDATASIZE, 0) == -1)
 						perror("send failed");
 				}
 				else{
 					printf("\nFile Successfully opened!\n");
-					memset(file_buf,0,MAXDATASIZE);
-					strcpy(file_buf,"HTTP/1.1 200 OK");
-					file_buf[MAXDATASIZE-1] = '\0';
-					send(new_fd, file_buf, MAXDATASIZE, 0);
+					// memset(file_buf,0,MAXDATASIZE);
+					// strcpy(file_buf,"HTTP/1.1 200 OK");
+					// file_buf[MAXDATASIZE-1] = '\0';
+					// send(new_fd, file_buf, MAXDATASIZE, 0);
 					// memset(file_buf,0,sizeof(file_buf));
 					// send(new_fd, file_buf, MAXDATASIZE, 0);
-					// if (send(new_fd, "HTTP/1.1 200 OK", 15, 0) == -1)
-					// 	perror("send failed");
+					send(new_fd, "HTTP/1.1 200 OK\r\n\r\n", MAXDATASIZE, 0);
+					// send(new_fd, "\r\n", 3, 0);
 
 					do {
 						memset(file_buf,0,sizeof(file_buf));
