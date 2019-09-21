@@ -175,10 +175,11 @@ int main(int argc, char *argv[])
 						memset(file_buf,0,sizeof(file_buf));
 						numfread = fread(file_buf, sizeof(char), MAXDATASIZE, fd);
 						// file_buf[numfread] = '\0';
-						if (send(new_fd, file_buf, numfread, 0) == -1)
+						if (send(new_fd, file_buf, numfread, 0) == -1) {
 							perror("send failed");
 							fclose(fd);
-
+						}
+							
 					} while (numfread == MAXDATASIZE-1);
 					fclose(fd);
 				}
