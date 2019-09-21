@@ -102,14 +102,10 @@ int main(int argc, char *argv[])
 
 	freeaddrinfo(servinfo); // all done with this structure
   //**************************************************************************send file path*******************************************************************************
-	char test[256] = "GET /teamname.txt HTTP/1.1\nUser-Agent: Wget/1.12 (linux-gnu)\nHost: localhost:3490\nConnection:  Keep-Alive";
 
-	if ((numbytes = send(sockfd, test, MAXDATASIZE-1, 0)) == -1){   // why minus -1 ?
+	if ((numbytes = send(sockfd, filePath, MAXDATASIZE-1, 0)) == -1){   // why minus -1 ?
 		printf("Send Failed");
 	}
-	// if ((numbytes = send(sockfd, filePath, MAXDATASIZE-1, 0)) == -1){   // why minus -1 ?
-	// 	printf("Send Failed");
-	// }
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 	    perror("recv");
 	    exit(1);
@@ -130,14 +126,6 @@ int main(int argc, char *argv[])
 	fPtr = fopen("output", "wb");
 	if (!fPtr )
 		printf("create file failed");
-
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
-			printf("receive failed\n");
-	}
-	printf("%s",buf);
-	// if ((rc = fputs(buf, fPtr)) == -1) {
-	// 		printf("writing to file failed\n");
-	// }
 
 	while(1){
 			//printf("???");
