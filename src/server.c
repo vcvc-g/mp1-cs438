@@ -36,7 +36,7 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
 	struct addrinfo hints, *servinfo, *p;
@@ -49,17 +49,22 @@ int main(void)
 	
 	char wget_buf[MAXDATASIZE];
 	char file_buf[MAXDATASIZE];
-	// char *c;
-	// char **wget_p  = NULL;
-	int numbytes, numfread; 
+	int numfread; 
 	FILE *fd;
+
+	if (argc != 2) {
+	    fprintf(stderr,"usage: server portno\n");
+	    exit(1);
+	}
+
+	char *portno = argv[1];
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE; // use my IP
 
-	if ((rv = getaddrinfo(NULL, PORT, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(NULL, portno, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
@@ -132,8 +137,7 @@ int main(void)
 					perror("send failed");
 			}
 			else{ // parse get structure
-				printf("%s",wget_buf);
-
+				// printf("%s",wget_buf);
 				char filePath[256] = ".";
 				int i,j,ctr;
 				char getParse[15][50];
