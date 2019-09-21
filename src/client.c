@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	//***************************************************parse cliend string**************************************************************************************//
 	char *firstAddress = argv[1] + 7;
 	char hostName[256] = "";
-	char filePath[256] = ".";
+	char filePath[256] = "GET ";
 	int slashCount = 0;
 	while(*(firstAddress) != '\0'){
 			if(*firstAddress == '/' )
@@ -65,9 +65,15 @@ int main(int argc, char *argv[])
 			}
 		firstAddress++;
 	}
+	char *httpOverHeader = " HTTP/1.1\nUser-Agent: Wget/1.12 (linux-gnu)\nHost: localhost:3490\nConnection: Keep-Alive";
+	append(filePath, *httpOverHeader);
 
+	while(*(httpOverHeader) != '\0'){
+					append(filePath, *httpOverHeader);
+				httpOverHeader++;
+	}
 	//printf("hostname: %s\n", hostName);
-	//printf("filePath: %s\n", filePath);
+	//printf("%s\n", filePath);
 
 	if ((rv = getaddrinfo(hostName, PORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -115,12 +121,25 @@ int main(int argc, char *argv[])
 
 	printf("client: received '%s'\n",buf);
 
+	//*********************************************************************check header file*********************************************************************************
+	// memset(buf, '0', sizeof(buf));
+	// if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+	// 	printf("ERROR: NO HEADER FILE");
+	// }
+	//
+	// if((strcmp(buf, "HTTP/1.1 200 NotFound") == 0)){
+	// 	printf("File Not Found\n");
+	// }
+	// else if((strcmp(buf, "HTTP/1.1 200 OK")) != 0){
+	// 		printf("%d, \n", strcmp(buf, "HTTP/1.1 200 OK") );
+	// 		printf("404 Bad Request\n");
+	// 	}
 	//*********************************************************************create output file*********************************************************************************
 
 	FILE * fPtr = NULL;
 	numbytes = 0;
 	int rc;
-	char fileBuf[MAXDATASIZE];
+	//char fileBuf[MAXDATASIZE];
 	int counter = 0;
 
 	fPtr = fopen("output", "wb");
@@ -128,40 +147,35 @@ int main(int argc, char *argv[])
 		printf("create file failed");
 
 	while(1){
-			//printf("???");
-			memset(buf, 0, sizeof(buf));
-			counter = 0;
+		memset(buf, 0, sizeof(buf));
 
-			if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
-					printf("receive failed\n");
-					break;
-			}
-			printf("number of bytes = %d\n", numbytes);
-			while(*(buf + counter) != '\0'){
-					append(fileBuf, *(buf + counter));
-					counter++;
-					if(*(buf + counter) == '\n'){
-						printf("1\n");
-					}
-		  }
-			if ((rc = fputs(fileBuf, fPtr)) == -1) {
-					printf("writing to file failed\n");
-					break;
-			}
-			if(counter != (MAXDATASIZE-1))
-				break;
+		counter = 0;
+		if ((numbytes = recv(sockfd, buf, MAXDATASIZE -1, 0)) == -1) {
+			printf("receive failed\n");
+			break;
+		}
+		while(counter != numbytes ){
+			counter++;
+		}
+
+		if ((rc = fputs(buf, fPtr)) == -1) {
+			printf("writing to file failed\n");
+			break;
+		}
+		if(counter != (MAXDATASIZE-1)){
+			break;
+		}
 	}
 
 	fclose(fPtr);
 	close(sockfd);
-
 	return 0;
 }
 
 
-
 void append(char *str, char ch){
     int len = strlen(str);
+	//printf("%d\n", len);
     str[len] = ch;
     str[len + 1] = '\0';
 }
