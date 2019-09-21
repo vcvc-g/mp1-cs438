@@ -159,15 +159,18 @@ int main(int argc, char *argv[])
 				}
 				else{
 					char file_buf[MAXDATASIZE];
+					char length_buf[MAXDATASIZE];
 					int numfread, numsend, fsize;
 					fseek(fd, 0, SEEK_END); // seek to end of file
 					fsize = ftell(fd); // get current file pointer
 					fseek(fd, 0, SEEK_SET); // seek back to beginning of file
 					printf("\nFile Successfully opened!\n");
-					memset(file_buf,'\0',MAXDATASIZE);
-					strcpy(file_buf,HTTP200);
+					strcpy(file_buf,"HTTP/1.1 200 OK\r\n");
+					sprintf(length_buf,"Content-Length: %d\r\n\r\n",fsize);
+					strcat(file_buf,length_buf);
 					numsend=send(new_fd, file_buf, strlen(file_buf), 0);
 					printf("\nHTTP Response send:%d, filebuf:%lu\n",numsend,strlen(file_buf));
+					printf("%s",file_buf);
 					while ((numfread = fread(file_buf, sizeof(char), MAXDATASIZE, fd))!=0) {
 						if ((numsend=send(new_fd, file_buf, numfread, 0)) == -1) {
 							perror("send failed");
