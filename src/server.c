@@ -18,7 +18,7 @@
 #define PORT "3490"  // the port users will be connecting to
 #define MAXDATASIZE 100 
 #define BACKLOG 10	 // how many pending connections queue will hold
-#define HTTP200 "HTTP/1.1 200 OK\r\n\r\n"
+#define HTTP200 "HTTP/1.1 200 OK \r\n\r\n"
 #define HTTP400 "HTTP/1.1 400 Bad Request\r\n\r\n"
 #define HTTP404 "HTTP/1.1 404 Not Found\r\n\r\n"
 
@@ -168,27 +168,42 @@ int main(int argc, char *argv[])
 						perror("send failed");
 				}
 				else{
+					char temp_buf[MAXDATASIZE];
 					printf("\nFile Successfully opened!\n");
-					strcpy(file_buf,HTTP200);
-					send(new_fd, file_buf, MAXDATASIZE-1, 0);
+					memcpy(temp_buf,HTTP200,strlen(HTTP200));
+					numfread = fread(file_buf,1,MAXDATASIZE-strlen(HTTP200),fd);
+					memcpy(&temp_buf[strlen(HTTP200)],file_buf,numfread);
+					send(new_fd, file_buf, numfread+strlen(HTTP200), 0);
+
 					do {
 						memset(file_buf,0,sizeof(file_buf));
-						numfread = fread(file_buf, sizeof(char), MAXDATASIZE, fd);
-						// file_buf[numfread] = '\0';
+						numfread = fread(file_buf, 1, MAXDATASIZE, fd);
+						if (numfread<MAXDATASIZE){
+							break;
+						}
+						file_buf[numfread] = '\0';
 						if (send(new_fd, file_buf, numfread, 0) == -1) {
 							perror("send failed");
 							fclose(fd);
 						}
-							
-					} while (numfread == MAXDATASIZE-1);
+					} while (numfread);
+					// char buf_out[MAXDATASIZE];
+					// while((numfread = fread(buf_out, sizeof(char), MAXDATASIZE, fd)) != 0) {
+					// 	if(send(new_fd, buf_out, numfread, 0) == -1){
+					// 		perror("send");
+					// 		fclose(fd);
+					// 	}
+					// }
+
 					fclose(fd);
-					printf("File closed");
+					printf("\nFile closed\n");
 				}
 			}
-
+			printf("\nnew_fd closed\n");
 			close(new_fd);
 			exit(0);
 		}
+		printf("\nparent end\n");
 		close(new_fd);  // parent doesn't need this
 	}
 
