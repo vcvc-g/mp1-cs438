@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 				perror("send failed");
 			
 			if (recv(new_fd, wget_buf, MAXDATASIZE-1, 0) == -1){ // if recv error
-				if (send(new_fd, "HTTP/1.1 400 Bad Request\r\n\r\n", MAXDATASIZE, 0) == -1)
+				if (send(new_fd, HTTP400, strlen(HTTP400), 0) == -1)
 					perror("send failed");
 			}
 			else{ // parse get structure
@@ -164,13 +164,13 @@ int main(int argc, char *argv[])
 
 				if (fd == NULL) { //invalid file
 					printf("\nFile open failed!\n"); 
-					if (send(new_fd, "HTTP/1.1 404 Not Found\r\n\r\n", MAXDATASIZE, 0) == -1)
+					if (send(new_fd, HTTP404, strlen(HTTP404), 0) == -1)
 						perror("send failed");
 				}
 				else{
 					printf("\nFile Successfully opened!\n");
-
-					send(new_fd, HTTP200, strlen(HTTP200), 0);
+					strncpy(file_buf,HTTP200,(sizeof file_buf)-1);
+					send(new_fd, file_buf, strlen(file_buf), 0);
 					do {
 						memset(file_buf,0,sizeof(file_buf));
 						numfread = fread(file_buf, sizeof(char), MAXDATASIZE, fd);
