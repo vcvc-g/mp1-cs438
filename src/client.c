@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	//***************************************************parse cliend string**************************************************************************************//
 	char *firstAddress = argv[1] + 7;
 	char hostName[256] = "";
-	char filePath[256] = ".";
+	char filePath[256] = "GET ";
 	int slashCount = 0;
 	while(*(firstAddress) != '\0'){
 			if(*firstAddress == '/' )
@@ -65,9 +65,15 @@ int main(int argc, char *argv[])
 			}
 		firstAddress++;
 	}
+	char *httpOverHeader = " HTTP/1.1\nUser-Agent: Wget/1.12 (linux-gnu)\nHost: localhost:3490\nConnection: Keep-Alive";
+	append(filePath, *httpOverHeader);
 
+	while(*(httpOverHeader) != '\0'){
+					append(filePath, *httpOverHeader);
+				httpOverHeader++;
+	}
 	//printf("hostname: %s\n", hostName);
-	//printf("filePath: %s\n", filePath);
+	//printf("%s\n", filePath);
 
 	if ((rv = getaddrinfo(hostName, PORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -116,18 +122,18 @@ int main(int argc, char *argv[])
 	printf("client: received '%s'\n",buf);
 
 	//*********************************************************************check header file*********************************************************************************
-	memset(buf, '0', sizeof(buf));
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-		printf("ERROR: NO HEADER FILE");
-	}
-
-	if((strcmp(buf, "HTTP/1.1 200 NotFound") == 0)){
-		printf("File Not Found\n");
-	}
-	else if((strcmp(buf, "HTTP/1.1 200 OK")) != 0){
-			printf("%d, \n", strcmp(buf, "HTTP/1.1 200 OK") );
-			printf("404 Bad Request\n");
-		}
+	// memset(buf, '0', sizeof(buf));
+	// if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+	// 	printf("ERROR: NO HEADER FILE");
+	// }
+	//
+	// if((strcmp(buf, "HTTP/1.1 200 NotFound") == 0)){
+	// 	printf("File Not Found\n");
+	// }
+	// else if((strcmp(buf, "HTTP/1.1 200 OK")) != 0){
+	// 		printf("%d, \n", strcmp(buf, "HTTP/1.1 200 OK") );
+	// 		printf("404 Bad Request\n");
+	// 	}
 	//*********************************************************************create output file*********************************************************************************
 
 	FILE * fPtr = NULL;
@@ -142,7 +148,7 @@ int main(int argc, char *argv[])
 
 	while(1){
 		memset(buf, 0, sizeof(buf));
-		
+
 		counter = 0;
 		if ((numbytes = recv(sockfd, buf, MAXDATASIZE -1, 0)) == -1) {
 			printf("receive failed\n");
@@ -169,7 +175,7 @@ int main(int argc, char *argv[])
 
 void append(char *str, char ch){
     int len = strlen(str);
-	printf("%d\n", len);
+	//printf("%d\n", len);
     str[len] = ch;
     str[len + 1] = '\0';
 }
