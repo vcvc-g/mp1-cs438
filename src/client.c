@@ -122,18 +122,18 @@ int main(int argc, char *argv[])
 	printf("client: received '%s'\n",buf);
 
 	//*********************************************************************check header file*********************************************************************************
-	// memset(buf, '0', sizeof(buf));
-	// if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-	// 	printf("ERROR: NO HEADER FILE");
-	// }
-	//
-	// if((strcmp(buf, "HTTP/1.1 200 NotFound") == 0)){
-	// 	printf("File Not Found\n");
-	// }
-	// else if((strcmp(buf, "HTTP/1.1 200 OK")) != 0){
-	// 		printf("%d, \n", strcmp(buf, "HTTP/1.1 200 OK") );
-	// 		printf("404 Bad Request\n");
-	// 	}
+	memset(buf, '0', sizeof(buf));
+	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+		printf("ERROR: NO HEADER FILE");
+	}
+
+	if((strcmp(buf, "HTTP/1.1 200 NotFound\r\n\r\n") == 0)){
+		printf("File Not Found\n");
+	}
+	else if((strcmp(buf, "HTTP/1.1 200 OK\r\n\r\n")) != 0){
+			printf("%d \n", strcmp(buf, "HTTP/1.1 200 OK\r\n\r\n") );
+			printf("404 Bad Request\n");
+		}
 	//*********************************************************************create output file*********************************************************************************
 
 	FILE * fPtr = NULL;
