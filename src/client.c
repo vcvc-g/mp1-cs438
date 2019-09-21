@@ -115,6 +115,18 @@ int main(int argc, char *argv[])
 
 	printf("client: received '%s'\n",buf);
 
+	//*********************************************************************check header file*********************************************************************************
+	memset(buf, 0, sizeof(buf));
+	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+		printf("ERROR: NO HEADER FILE");
+	}
+
+	if((strcmp(buf, "HTTP/1.1 200 NotFound") == 0)){
+		printf("File Not Found\n");
+	}
+	else if((strcmp(buf, "HTTP/1.1 200 OK")) != 0){
+	printf("404 Bad Request\n");
+		}
 	//*********************************************************************create output file*********************************************************************************
 
 	FILE * fPtr = NULL;
@@ -128,33 +140,35 @@ int main(int argc, char *argv[])
 		printf("create file failed");
 
 	while(1){
-			//printf("???");
 			memset(buf, 0, sizeof(buf));
-			counter = 0;
+			//memset(fileBuf, 0, sizeof(fileBuf));
+			//printf("%c\n", *(buf) );
 
+			counter = 0;
 			if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
 					printf("receive failed\n");
 					break;
 			}
-			printf("number of bytes = %d\n", numbytes);
+			//printf("number of bytes = %d\n", numbytes);
+			//printf("%c\n",;
 			while(*(buf + counter) != '\0'){
+					//printf("%c\n", *(buf) );
 					append(fileBuf, *(buf + counter));
 					counter++;
-					if(*(buf + counter) == '\n'){
-						printf("1\n");
-					}
+
 		  }
 			if ((rc = fputs(fileBuf, fPtr)) == -1) {
 					printf("writing to file failed\n");
 					break;
 			}
-			if(counter != (MAXDATASIZE-1))
+			if(counter != (MAXDATASIZE-1)){
+				printf("number of bytes = %d\n", numbytes);
 				break;
+			}
 	}
 
 	fclose(fPtr);
 	close(sockfd);
-
 	return 0;
 }
 
