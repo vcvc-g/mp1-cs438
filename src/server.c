@@ -22,6 +22,7 @@
 
 void sigchld_handler(int s)
 {
+	printf("%d",s);
 	while(waitpid(-1, NULL, WNOHANG) > 0);
 }
 
@@ -50,8 +51,7 @@ int main(void)
 	char file_buf[MAXDATASIZE];
 	// char *c;
 	// char **wget_p  = NULL;
-	// int numbytes, numspace, numfread; 
-	int numfread;
+	int numbytes, numfread; 
 	FILE *fd;
 
 	memset(&hints, 0, sizeof hints);
@@ -131,38 +131,40 @@ int main(void)
 				if (send(new_fd, "HTTP/1.1 400 Bad Request\r\n\r\n", MAXDATASIZE, 0) == -1)
 					perror("send failed");
 			}
-			else{
-				////// parse get structure
-				// numspace = 0;
-				// c = strtok(wget_buf, " ");
-				// while (c != NULL) {
-				// 	wget_p = realloc(wget_p, ++numspace*sizeof(char*));
-				// 	if (wget_p == NULL) 
-				// 		printf("\nWget parse failed!\n");
-				// 	wget_p[numspace-1] = c;
-				// 	c = strtok(NULL, " ");
-				// }
-				// fd = fopen(wget_p[1], "r"); 
-				// printf("\nFile Name Received: %s\n", wget_p[1]); 
+			else{ // parse get structure
+				printf("%s",wget_buf);
 
-				fd = fopen(wget_buf, "r"); 
-				printf("\nFile Name Received: %s\n", wget_buf); 			
-				if (fd == NULL) {
+				char filePath[256] = ".";
+				int i,j,ctr;
+				char getParse[15][50];
+				j=0; ctr=0;
+				for (i=0; i<=strlen(wget_buf); i++) {
+
+					if (wget_buf[i]==' '||wget_buf[i]=='\0') {
+						getParse[ctr][j] = '\0';
+						ctr++;
+						j = 0;
+					}else{
+						getParse[ctr][j] = wget_buf[i];
+						j++;
+					}
+				}
+
+				strcat(filePath,getParse[1]);
+				printf("\nFile Name Received: %s\n",filePath); 
+				fd = fopen(filePath, "r"); 
+				// fd = fopen(wget_buf, "r"); 
+				// printf("\nFile Name Received: %s\n", wget_buf); 	
+
+				if (fd == NULL) { //invalid file
 					printf("\nFile open failed!\n"); 
 					if (send(new_fd, "HTTP/1.1 404 Not Found\r\n\r\n", MAXDATASIZE, 0) == -1)
 						perror("send failed");
 				}
 				else{
 					printf("\nFile Successfully opened!\n");
-					// memset(file_buf,0,MAXDATASIZE);
-					// strcpy(file_buf,"HTTP/1.1 200 OK");
-					// file_buf[MAXDATASIZE-1] = '\0';
-					// send(new_fd, file_buf, MAXDATASIZE, 0);
-					// memset(file_buf,0,sizeof(file_buf));
-					// send(new_fd, file_buf, MAXDATASIZE, 0);
-					send(new_fd, "HTTP/1.1 200 OK\r\n\r\n", MAXDATASIZE, 0);
-					// send(new_fd, "\r\n", 3, 0);
 
+					send(new_fd, "HTTP/1.1 200 OK\r\n\r\n", MAXDATASIZE, 0);
 					do {
 						memset(file_buf,0,sizeof(file_buf));
 						numfread = fread(file_buf, sizeof(char), MAXDATASIZE-1, fd);
