@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 	printf("client: received '%s'\n",buf);
 
 	//*********************************************************************check header file*********************************************************************************
-	memset(buf, 0, sizeof(buf));
+	memset(buf, '0', sizeof(buf));
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 		printf("ERROR: NO HEADER FILE");
 	}
@@ -125,14 +125,15 @@ int main(int argc, char *argv[])
 		printf("File Not Found\n");
 	}
 	else if((strcmp(buf, "HTTP/1.1 200 OK")) != 0){
-	printf("404 Bad Request\n");
+			printf("%d, \n", strcmp(buf, "HTTP/1.1 200 OK") );
+			printf("404 Bad Request\n");
 		}
 	//*********************************************************************create output file*********************************************************************************
 
 	FILE * fPtr = NULL;
 	numbytes = 0;
 	int rc;
-	char fileBuf[MAXDATASIZE];
+	//char fileBuf[MAXDATASIZE];
 	int counter = 0;
 
 	fPtr = fopen("output", "wb");
@@ -140,31 +141,24 @@ int main(int argc, char *argv[])
 		printf("create file failed");
 
 	while(1){
-			memset(buf, 0, sizeof(buf));
-			//memset(fileBuf, 0, sizeof(fileBuf));
-			//printf("%c\n", *(buf) );
+		memset(buf, 0, sizeof(buf));
+		
+		counter = 0;
+		if ((numbytes = recv(sockfd, buf, MAXDATASIZE -1, 0)) == -1) {
+			printf("receive failed\n");
+			break;
+		}
+		while(counter != numbytes ){
+			counter++;
+		}
 
-			counter = 0;
-			if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
-					printf("receive failed\n");
-					break;
-			}
-			//printf("number of bytes = %d\n", numbytes);
-			//printf("%c\n",;
-			while(*(buf + counter) != '\0'){
-					//printf("%c\n", *(buf) );
-					append(fileBuf, *(buf + counter));
-					counter++;
-
-		  }
-			if ((rc = fputs(fileBuf, fPtr)) == -1) {
-					printf("writing to file failed\n");
-					break;
-			}
-			if(counter != (MAXDATASIZE-1)){
-				printf("number of bytes = %d\n", numbytes);
-				break;
-			}
+		if ((rc = fputs(buf, fPtr)) == -1) {
+			printf("writing to file failed\n");
+			break;
+		}
+		if(counter != (MAXDATASIZE-1)){
+			break;
+		}
 	}
 
 	fclose(fPtr);
@@ -173,9 +167,9 @@ int main(int argc, char *argv[])
 }
 
 
-
 void append(char *str, char ch){
     int len = strlen(str);
+	printf("%d\n", len);
     str[len] = ch;
     str[len + 1] = '\0';
 }

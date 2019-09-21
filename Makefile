@@ -22,7 +22,7 @@ LISTENEROBJECTS = obj/listener.o
 #The first rule in the Makefile is the default (the one chosen by plain `make`).
 #Since 'all' is first in this file, both `make all` and `make` do the same thing.
 #(`make obj server client talker listener` would also have the same effect).
-all : obj server client talker listener
+all : obj http_server http_client talker listener
 
 #$@: name of rule's target: server, client, talker, or listener, for the respective rules.
 #$^: the entire dependency string (after expansions); here, $(SERVEROBJECTS)

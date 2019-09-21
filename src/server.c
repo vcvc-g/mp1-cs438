@@ -142,7 +142,7 @@ int main(void)
 				// 	c = strtok(NULL, " ");
 				// }
 				// fd = fopen(wget_p[1], "r"); 
-				// printf("\nFile Name Received: %s\n", wget_p[1]); 
+				// printf("\nFile Name Received: %s\n", wget_p[1]);
 
 				fd = fopen(wget_buf, "r"); 
 				printf("\nFile Name Received: %s\n", wget_buf); 			
@@ -153,18 +153,23 @@ int main(void)
 				}
 				else{
 					printf("\nFile Successfully opened!\n");
-					memset(file_buf,0,sizeof(file_buf));
-					//sprintf(file_buf,"HTTP/1.1 200 OK");
-					//file_buf[MAXDATASIZE] = '\0';
-					send(new_fd, "HTTP/1.1 200 OK", m, 0);
+					memset(file_buf, '0', MAXDATASIZE);
+					strcpy(file_buf,"HTTP/1.1 200 OK");
+					//file_buf[15] = '\0';
+					int a = send(new_fd, file_buf, MAXDATASIZE - 1, 0);
+					printf("a%d\n", a);
 					// memset(file_buf,0,sizeof(file_buf));
-					// send(new_fd, file_buf, MAXDATASIZE, 0);
+					//send(new_fd, "HTTP/1.1 200 OK", 15, 0);
+					// if (send(new_fd, "HTTP/1.1 200 OK", 15, 0) == -1)
+					// 	perror("send failed");
 
 					do {
-						memset(file_buf,0,sizeof(file_buf));
+						memset(file_buf, '0',sizeof(file_buf));
 						numfread = fread(file_buf, sizeof(char), MAXDATASIZE-1, fd);
-						file_buf[numfread] = '\0';
-						if (send(new_fd, file_buf, MAXDATASIZE, 0) == -1)
+						printf("%d\n", numfread);
+						//file_buf[numfread] = '\0';
+						//printf("dsadadasdsa\n");
+						if (send(new_fd, file_buf, numfread, 0) == -1)
 							perror("send failed");
 
 					} while (numfread == MAXDATASIZE-1);
