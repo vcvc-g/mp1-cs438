@@ -123,15 +123,18 @@ int main(int argc, char *argv[])
 			s, sizeof s);
 		printf("server: got connection from %s\n", s);
 
-		if (!fork()) { // this is the child process
-			close(sockfd); // child doesn't need the listener
+		if (!fork()) { // Thread
+			close(sockfd); 
 			
-			if (recv(new_fd, wget_buf, MAXDATASIZE-1, 0) == -1){ // if recv error
+			if (recv(new_fd, wget_buf, MAXDATASIZE, 0) == -1){ // if recv error
 				if (send(new_fd, HTTP400, strlen(HTTP400), 0) == -1)
 					perror("send failed");
 			}
-			else{ // parse get structure
-				// printf("%s",wget_buf);
+			else{ // Parse get structure
+				printf("\n------GET BEGIN------\n");
+				printf("%s",wget_buf);
+				printf("\n------GET END--------\n");
+
 				char filePath[256] = ".";
 				int i,j,ctr;
 				char getParse[15][50];
@@ -149,28 +152,36 @@ int main(int argc, char *argv[])
 				}
 
 				strcat(filePath,getParse[1]);
-				printf("\nFile Name Received: %s\n",filePath); 
+				printf("\nRequest File Name Received: %s\n",filePath); 
 				fd = fopen(filePath, "r"); 
 
-				if (fd == NULL) { //invalid file
-					printf("\nFile open failed!\n"); 
+				if (fd == NULL) { //Invalid file
+					printf("\nFile Open Failed!\n"); 
 					if (send(new_fd, HTTP404, strlen(HTTP404), 0) == -1)
 						perror("send failed");
+					printf("\n------HTTP RESPONSE BEGIN------\n");
+					printf(HTTP404);
+					printf("\n------HTTP RESPONSE END--------\n");
 				}
-				else{
+				else{ // Valid file 
 					char file_buf[MAXDATASIZE];
 					char length_buf[MAXDATASIZE];
 					int numfread, numsend, fsize;
-					fseek(fd, 0, SEEK_END); // seek to end of file
-					fsize = ftell(fd); // get current file pointer
-					fseek(fd, 0, SEEK_SET); // seek back to beginning of file
-					printf("\nFile Successfully opened!\n");
+					// Get file size
+					fseek(fd, 0, SEEK_END);
+					fsize = ftell(fd);
+					fseek(fd, 0, SEEK_SET);
+
 					strcpy(file_buf,"HTTP/1.1 200 OK\r\n");
 					sprintf(length_buf,"Content-Length: %d\r\n\r\n",fsize);
 					strcat(file_buf,length_buf);
 					numsend=send(new_fd, file_buf, strlen(file_buf), 0);
 					printf("\nHTTP Response send:%d, filebuf:%lu\n",numsend,strlen(file_buf));
+					printf("\n------HTTP RESPONSE BEGIN------\n");
 					printf("%s",file_buf);
+					printf("\n------HTTP RESPONSE END--------\n");
+
+					// Sending file body
 					while ((numfread = fread(file_buf, sizeof(char), MAXDATASIZE, fd))!=0) {
 						if ((numsend=send(new_fd, file_buf, numfread, 0)) == -1) {
 							perror("send failed");
@@ -178,13 +189,12 @@ int main(int argc, char *argv[])
 						}
 						printf("\nFile sned:%d, filebuf:%lu, numfread:%d, fsieze:%d\n",numsend,strlen(file_buf),numfread,fsize);
 						memset(file_buf,'\0',sizeof(file_buf));
-							
 					};
 					fclose(fd);
-					printf("File closed");
+					printf("File Response Finished");
 				}
 			}
-
+			// Thread finished
 			close(new_fd);
 			exit(0);
 		}

@@ -15,8 +15,7 @@
 #include <arpa/inet.h>
 
 #define PORT "3490" // the port client will be connecting to
-//#define PORT "80" // the http port client will be connecting to
-
+#define HTTP200 "HTTP/1.1 200 OK\r\n\r\n"
 #define MAXDATASIZE 100 // max number of bytes we can get at once
 
 void append(char *str, char ch);
@@ -72,8 +71,7 @@ int main(int argc, char *argv[])
 					append(filePath, *httpOverHeader);
 				httpOverHeader++;
 	}
-	//printf("hostname: %s\n", hostName);
-	//printf("%s\n", filePath);
+
 
 	if ((rv = getaddrinfo(hostName, PORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -107,66 +105,57 @@ int main(int argc, char *argv[])
 	printf("client: connecting to %s\n", s);
 
 	freeaddrinfo(servinfo); // all done with this structure
-  //**************************************************************************send file path*******************************************************************************
 
-	if ((numbytes = send(sockfd, filePath, MAXDATASIZE-1, 0)) == -1){   // why minus -1 ?
+	// Send File Path
+	if ((numbytes = send(sockfd, filePath, MAXDATASIZE, 0)) == -1){
 		printf("Send Failed");
 	}
+	// Check Header File
 	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 	    perror("recv");
 	    exit(1);
 	}
+	printf("-----HTTP Response Received-----\n");
+	printf("%s\n",buf);
+	printf("-----HTTP Response Finished-----\n");
+	printf("\nnumbytes recv:%d\n",numbytes);
 
-	buf[numbytes] = '\0';
+	char HTTPOK[] = "HTTP/1.1 200 OK";
+	char* OKCheck; 
+	OKCheck = strstr(buf, HTTPOK);
+	if(strstr(buf, "404 Not Found") != NULL){
+		printf("\n404 File Not Found\n");
+		close(sockfd);
+		return 0;
+	}
+	else if(OKCheck == NULL) {
+		printf("\n400 Bad Request\n");
+		close(sockfd);
+		return 0;
 
-	printf("client: received '%s'\n",buf);
+	}
 
-	//*********************************************************************check header file*********************************************************************************
-	// memset(buf, '0', sizeof(buf));
-	// if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-	// 	printf("ERROR: NO HEADER FILE");
-	// }
-	//
-	// if((strcmp(buf, "HTTP/1.1 200 NotFound") == 0)){
-	// 	printf("File Not Found\n");
-	// }
-	// else if((strcmp(buf, "HTTP/1.1 200 OK")) != 0){
-	// 		printf("%d, \n", strcmp(buf, "HTTP/1.1 200 OK") );
-	// 		printf("404 Bad Request\n");
-	// 	}
-	//*********************************************************************create output file*********************************************************************************
-
+	// Create Output File
 	FILE * fPtr = NULL;
-	numbytes = 0;
-	int rc;
-	//char fileBuf[MAXDATASIZE];
-	int counter = 0;
-
 	fPtr = fopen("output", "wb");
 	if (!fPtr )
 		printf("create file failed");
-
+	printf("\nOutput created\n");
+	printf("\nOutput Writing\n");
 	while(1){
+		
 		memset(buf, 0, sizeof(buf));
-
-		counter = 0;
-		if ((numbytes = recv(sockfd, buf, MAXDATASIZE -1, 0)) == -1) {
+		if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
 			printf("receive failed\n");
 			break;
 		}
-		while(counter != numbytes ){
-			counter++;
-		}
-
-		if ((rc = fputs(buf, fPtr)) == -1) {
-			printf("writing to file failed\n");
-			break;
-		}
-		if(counter != (MAXDATASIZE-1)){
+		fwrite(buf, numbytes, 1, fPtr);
+		printf("Writing Bytes:%d\n",numbytes);
+		if (numbytes!=MAXDATASIZE) {
 			break;
 		}
 	}
-
+	printf("\nOutput Finished\n");
 	fclose(fPtr);
 	close(sockfd);
 	return 0;
@@ -175,7 +164,6 @@ int main(int argc, char *argv[])
 
 void append(char *str, char ch){
     int len = strlen(str);
-	//printf("%d\n", len);
     str[len] = ch;
     str[len + 1] = '\0';
 }
