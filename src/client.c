@@ -14,7 +14,7 @@
 
 #include <arpa/inet.h>
 
-#define PORT "3490" // the port client will be connecting to
+#define PORT "80" // default http port client will be connecting to
 #define HTTP200 "HTTP/1.1 200 OK\r\n\r\n"
 #define MAXDATASIZE 100 // max number of bytes we can get at once
 
@@ -48,10 +48,11 @@ int main(int argc, char *argv[])
 	hints.ai_socktype = SOCK_STREAM;
 
 
-	//***************************************************parse cliend string**************************************************************************************//
+	//Parse Client String
 	char *firstAddress = argv[1] + 7;
 	char hostName[256] = "";
 	char filePath[256] = "GET ";
+	char portNo[8];
 	int slashCount = 0;
 	while(*(firstAddress) != '\0'){
 			if(*firstAddress == '/' )
@@ -110,20 +111,31 @@ int main(int argc, char *argv[])
 	if ((numbytes = send(sockfd, filePath, MAXDATASIZE, 0)) == -1){
 		printf("Send Failed");
 	}
-	// Check Header File
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+	// Recv Header File
+	if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
 	    perror("recv");
 	    exit(1);
 	}
+	char header_buf[MAXDATASIZE];
+	int slashN_ctr = 0, buf_cur=0;
+	while (slashN_ctr<3 && buf_cur<50){
+		if (buf[buf_cur]=='\n') {
+			slashN_ctr++;
+		}
+		buf_cur++;
+	}
+	memcpy(header_buf,buf,buf_cur);
+	// header_buf[buf_cur+1] = '\0';
+
 	printf("-----HTTP Response Received-----\n");
-	printf("%s\n",buf);
+	printf("%s\n",header_buf);
 	printf("-----HTTP Response Finished-----\n");
-	printf("\nnumbytes recv:%d\n",numbytes);
+	printf("\nnumbytes recv:%d, HTTP Response recv:%lu\n",numbytes,strlen(header_buf));
 
 	char HTTPOK[] = "HTTP/1.1 200 OK";
 	char* OKCheck; 
-	OKCheck = strstr(buf, HTTPOK);
-	if(strstr(buf, "404 Not Found") != NULL){
+	OKCheck = strstr(header_buf, HTTPOK);
+	if(strstr(header_buf, "404 Not Found") != NULL){
 		printf("\n404 File Not Found\n");
 		close(sockfd);
 		return 0;
@@ -142,6 +154,9 @@ int main(int argc, char *argv[])
 		printf("create file failed");
 	printf("\nOutput created\n");
 	printf("\nOutput Writing\n");
+	fwrite(&buf[buf_cur], numbytes-strlen(header_buf), 1, fPtr);
+	printf("Writing Bytes:%lu\n",numbytes-strlen(header_buf));
+	int recv_bytes = numbytes-strlen(header_buf);
 	while(1){
 		
 		memset(buf, 0, sizeof(buf));
@@ -151,10 +166,12 @@ int main(int argc, char *argv[])
 		}
 		fwrite(buf, numbytes, 1, fPtr);
 		printf("Writing Bytes:%d\n",numbytes);
+		recv_bytes+=numbytes;
 		if (numbytes!=MAXDATASIZE) {
 			break;
 		}
 	}
+	printf("\nRecv %d Bytes", recv_bytes);
 	printf("\nOutput Finished\n");
 	fclose(fPtr);
 	close(sockfd);

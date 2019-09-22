@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 	
 	char wget_buf[MAXDATASIZE];
 	FILE *fd;
+	int numsend;
 
 	if (argc != 2) {
 	    fprintf(stderr,"usage: server portno\n");
@@ -157,16 +158,18 @@ int main(int argc, char *argv[])
 
 				if (fd == NULL) { //Invalid file
 					printf("\nFile Open Failed!\n"); 
-					if (send(new_fd, HTTP404, strlen(HTTP404), 0) == -1)
+					if ((numsend=send(new_fd, HTTP404, strlen(HTTP404), 0)) == -1)
 						perror("send failed");
+					printf("HTTP Response send:%d\n",numsend);
 					printf("\n------HTTP RESPONSE BEGIN------\n");
 					printf(HTTP404);
 					printf("\n------HTTP RESPONSE END--------\n");
+
 				}
 				else{ // Valid file 
 					char file_buf[MAXDATASIZE];
 					char length_buf[MAXDATASIZE];
-					int numfread, numsend, fsize;
+					int numfread, fsize;
 					// Get file size
 					fseek(fd, 0, SEEK_END);
 					fsize = ftell(fd);
@@ -195,6 +198,7 @@ int main(int argc, char *argv[])
 				}
 			}
 			// Thread finished
+			printf("Thead finished");
 			close(new_fd);
 			exit(0);
 		}
