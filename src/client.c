@@ -14,9 +14,9 @@
 
 #include <arpa/inet.h>
 
-#define PORT "80" // default http port client will be connecting to
+#define HTTPPORT "80" // default http port client will be connecting to
 #define HTTP200 "HTTP/1.1 200 OK\r\n\r\n"
-#define MAXDATASIZE 100 // max number of bytes we can get at once
+#define MAXDATASIZE 256 // max number of bytes we can get at once
 
 void append(char *str, char ch);
 
@@ -29,6 +29,37 @@ void *get_in_addr(struct sockaddr *sa)
 
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
+
+char** str_split(char* str, char delim)
+{   
+    char** splitStr  = 0;
+    size_t count     = 0;
+    char* strPtr     = str;
+    char delimArray[2];   //I HAVE NOT IDEA WHY strok wants to take an array as argument......stackflow save my life at this point....
+    delimArray[0] = delim;
+    delimArray[1] = '\0';
+    /* Count how many elements will be extracted. */
+    while (*strPtr){
+        if (delim == *strPtr){
+            count++;
+        }
+        strPtr++;
+    }
+    count++;
+    splitStr = malloc(sizeof(char*) * count);
+    if (splitStr){
+        size_t idx  = 0;
+        char* token = strtok(str, delimArray);
+
+        while (token){
+            *(splitStr + idx++) = strdup(token);
+            token = strtok(0, delimArray);
+        }
+        *(splitStr + idx) = NULL;
+    }
+    return splitStr;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -52,29 +83,49 @@ int main(int argc, char *argv[])
 	char *firstAddress = argv[1] + 7;
 	char hostName[256] = "";
 	char filePath[256] = "GET ";
-	char portNo[8];
-	int slashCount = 0;
+	char inParse[2][256];
+	int slashCount = 0, i;
+
 	while(*(firstAddress) != '\0'){
-			if(*firstAddress == '/' )
-					slashCount++;
-			if(slashCount != 1){
-					append(hostName, *firstAddress);
-			}
-			else if(slashCount == 1){
-					append(filePath, *firstAddress);
-			}
+		if(*firstAddress == '/' )
+			slashCount++;
+		if(slashCount != 1){
+			append(hostName, *firstAddress);
+		}
+		else if(slashCount == 1){
+			append(filePath, *firstAddress);
+		}
 		firstAddress++;
 	}
+
+	char **split;
+	split = str_split(hostName,':');
+	if (split) {
+		for (i=0; *(split+i); i++) {
+			strcpy(inParse[i],*(split+i));
+			// printf("LINK_%d: %s\n",i,*(split+i));
+			// free(*(split+i));
+		}
+		// free(split);
+	}
+
 	char *httpOverHeader = " HTTP/1.1\nUser-Agent: Wget/1.12 (linux-gnu)\nHost: localhost:3490\nConnection: Keep-Alive";
 	append(filePath, *httpOverHeader);
 
 	while(*(httpOverHeader) != '\0'){
-					append(filePath, *httpOverHeader);
-				httpOverHeader++;
+		append(filePath, *httpOverHeader);
+		httpOverHeader++;
 	}
 
+	if(strlen(inParse[1])==0){
+		strcpy(inParse[1],HTTPPORT);
+	}
 
-	if ((rv = getaddrinfo(hostName, PORT, &hints, &servinfo)) != 0) {
+	printf("filePath:%s\n",filePath);
+	printf("hostName:%s\n",inParse[0]);
+	printf("portNo:%s, portNo len:%lu\n",inParse[1], strlen(inParse[1]));
+
+	if ((rv = getaddrinfo(inParse[0], inParse[1], &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
@@ -154,26 +205,35 @@ int main(int argc, char *argv[])
 		printf("create file failed");
 	printf("\nOutput created\n");
 	printf("\nOutput Writing\n");
-	fwrite(&buf[buf_cur], numbytes-strlen(header_buf), 1, fPtr);
-	printf("Writing Bytes:%lu\n",numbytes-strlen(header_buf));
-	int recv_bytes = numbytes-strlen(header_buf);
-	while(1){
-		
-		memset(buf, 0, sizeof(buf));
-		if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
-			printf("receive failed\n");
-			break;
-		}
-		fwrite(buf, numbytes, 1, fPtr);
-		printf("Writing Bytes:%d\n",numbytes);
-		recv_bytes+=numbytes;
-		if (numbytes!=MAXDATASIZE) {
-			break;
+	int recv_bytes;
+	if ((numbytes!=MAXDATASIZE)&&(numbytes!=strlen(header_buf))){
+		fwrite(&buf[buf_cur], numbytes-strlen(header_buf), 1, fPtr);
+		printf("Writing Bytes:%lu\n",numbytes-strlen(header_buf));
+		printf("Tiny File..\n");
+		recv_bytes = numbytes-strlen(header_buf);
+
+	}else{
+		fwrite(&buf[buf_cur], numbytes-strlen(header_buf), 1, fPtr);
+		printf("Writing Bytes:%lu\n",numbytes-strlen(header_buf));
+		recv_bytes = numbytes-strlen(header_buf);
+		while(1){
+			memset(buf, 0, sizeof(buf));
+			if ((numbytes = recv(sockfd, buf, MAXDATASIZE, 0)) == -1) {
+				printf("receive failed\n");
+				break;
+			}
+			fwrite(buf, numbytes, 1, fPtr);
+			printf("Writing Bytes:%d\n",numbytes);
+			recv_bytes+=numbytes;
+			if (numbytes<MAXDATASIZE) {
+				break;
+			}
 		}
 	}
 	printf("\nRecv %d Bytes", recv_bytes);
 	printf("\nOutput Finished\n");
 	fclose(fPtr);
+	send(sockfd, inParse[1], MAXDATASIZE, 0);
 	close(sockfd);
 	return 0;
 }

@@ -12,7 +12,7 @@
 #include <signal.h>
 
 #define PORT "3490"  // the port users will be connecting to
-#define MAXDATASIZE 100 
+#define MAXDATASIZE 256 
 #define BACKLOG 10	 // how many pending connections queue will hold
 #define HTTP200 "HTTP/1.1 200 OK\r\n\r\n"
 #define HTTP400 "HTTP/1.1 400 Bad Request\r\n\r\n"
@@ -194,11 +194,17 @@ int main(int argc, char *argv[])
 						memset(file_buf,'\0',sizeof(file_buf));
 					};
 					fclose(fd);
-					printf("File Response Finished");
+					printf("File Response Finished\n");
 				}
 			}
 			// Thread finished
-			printf("Thead finished");
+			printf("\nThead finished\n");
+			if (recv(new_fd, wget_buf, MAXDATASIZE, 0) == -1){ // if recv error
+				if (send(new_fd, HTTP400, strlen(HTTP400), 0) == -1)
+					perror("\nsend failed\n");
+			}
+			printf("\n%s\n",wget_buf);
+			printf("\nSocket Closed\n");
 			close(new_fd);
 			exit(0);
 		}

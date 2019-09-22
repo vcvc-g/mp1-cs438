@@ -8,8 +8,6 @@ COMPILERFLAGS = -g -Wall -Wextra -Wno-sign-compare
 #by a space (e.g. SOMEOBJECTS = obj/foo.o obj/bar.o obj/baz.o).
 SERVEROBJECTS = obj/server.o
 CLIENTOBJECTS = obj/client.o
-TALKEROBJECTS = obj/talker.o
-LISTENEROBJECTS = obj/listener.o
 
 
 #Every rule listed here as .PHONY is "phony": when you say you want that rule satisfied,
@@ -22,7 +20,7 @@ LISTENEROBJECTS = obj/listener.o
 #The first rule in the Makefile is the default (the one chosen by plain `make`).
 #Since 'all' is first in this file, both `make all` and `make` do the same thing.
 #(`make obj server client talker listener` would also have the same effect).
-all : obj server client talker listener
+all : obj server client
 
 #$@: name of rule's target: server, client, talker, or listener, for the respective rules.
 #$^: the entire dependency string (after expansions); here, $(SERVEROBJECTS)
@@ -46,17 +44,9 @@ client: $(CLIENTOBJECTS)
 
 
 
-
-talker: $(TALKEROBJECTS)
-	$(CC) $(COMPILERFLAGS) $^ -o $@ $(LINKLIBS)
-
-listener: $(LISTENEROBJECTS)
-	$(CC) $(COMPILERFLAGS) $^ -o $@ $(LINKLIBS)
-
-
 #RM is a built-in variable that defaults to "rm -f".
 clean :
-	$(RM) obj/*.o server client talker listener
+	$(RM) obj/*.o server client
 
 #$<: the first dependency in the list; here, src/%.c. (Of course, we could also have used $^).
 #The % sign means "match one or more characters". You specify it in the target, and when a file
